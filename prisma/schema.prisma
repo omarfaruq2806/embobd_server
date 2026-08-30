@@ -1,0 +1,136 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+//=======================================
+enum Role {
+  ADMIN
+  MODERATOR
+  EMPLOYER
+  CANDIDATE
+}
+
+//=======================================
+enum JobStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+}
+
+//=======================================
+enum JobType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+  FREELANCE
+}
+
+//=======================================
+enum WorkplaceType {
+  ONSITE
+  REMOTE
+  HYBRID
+}
+
+//=======================================
+// model
+//=======================================
+
+model User {
+  id    String @id @default(cuid())
+  name  String
+  email String @unique
+  role  Role   @default(CANDIDATE)
+
+  companies Company[]
+  jobs      Job[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([role])
+}
+
+//=======================================
+model Company {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  website     String?
+  logo        String?
+
+  ownerUserId String
+  owner       User   @relation(fields: [ownerUserId], references: [id])
+
+  jobs Job[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([ownerUserId])
+}
+
+//=======================================
+model Category {
+  id          String  @id @default(cuid())
+  name        String  @unique
+  description String?
+
+  jobs Job[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+//=======================================
+model Job {
+  id          String @id @default(cuid())
+  title       String
+  description String
+
+  salaryMin      Int?
+  salaryMax      Int?
+  salaryCurrency String @default("BDT")
+
+  location String?
+
+  jobType       JobType
+  workplaceType WorkplaceType
+
+  deadline DateTime?
+
+  status JobStatus @default(DRAFT)
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  ownerUserId String
+  owner       User   @relation(fields: [ownerUserId], references: [id])
+
+  applyEmail String
+
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  publishedAt DateTime?
+
+  @@index([companyId])
+  @@index([categoryId])
+  @@index([ownerUserId])
+  @@index([status])
+  @@index([jobType])
+  @@index([workplaceType])
+}
