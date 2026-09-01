@@ -1,8 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -44,25 +42,103 @@ enum WorkplaceType {
 }
 
 //=======================================
-// model
+// Better Auth Core Models
 //=======================================
 
 model User {
-  id    String @id @default(cuid())
-  name  String
-  email String @unique
-  role  Role   @default(CANDIDATE)
+  id            String    @id
+  name          String
+  email         String    @unique
+  emailVerified Boolean   @default(false)
+  image         String?
+  role          Role      @default(CANDIDATE)
 
-  companies Company[]
-  jobs      Job[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  sessions      Session[]
+  accounts      Account[]
+
+  profile       Profile?
+  companies     Company[]
+  jobs          Job[]
 
   @@index([role])
 }
 
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  issuer                String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+model Verification {
+  id         String    @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime? @default(now())
+  updatedAt  DateTime? @updatedAt
+
+  @@index([identifier])
+}
+
 //=======================================
+// Profile Model
+//=======================================
+
+model Profile {
+  id           String    @id @default(cuid())
+  userId       String    @unique
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  avatar       String?
+  bio          String?
+  phone        String?
+  location     String?
+  title        String?
+  skills       String[]  @default([])
+  resumeUrl    String?
+  portfolioUrl String?
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([userId])
+}
+
+//=======================================
+// Company Model
+//=======================================
+
 model Company {
   id          String  @id @default(cuid())
   name        String
@@ -82,6 +158,9 @@ model Company {
 }
 
 //=======================================
+// Category Model
+//=======================================
+
 model Category {
   id          String  @id @default(cuid())
   name        String  @unique
@@ -94,6 +173,9 @@ model Category {
 }
 
 //=======================================
+// Job Model
+//=======================================
+
 model Job {
   id          String @id @default(cuid())
   title       String
