@@ -8,13 +8,14 @@ const createJob = catchAsync(async (req: any, res: any) => {
   sendResponse(res, {
     statusCode: 201,
     success: true,
-    message: "Job created successfully",
+    message: "Job submitted successfully and is pending admin approval",
     data: result,
   });
 });
 
 const getAllJobs = catchAsync(async (req: any, res: any) => {
-  const result = await JobService.getAllJobs();
+  const { status, ownerUserId, categoryId, search } = req.query;
+  const result = await JobService.getAllJobs({ status, ownerUserId, categoryId, search });
 
   sendResponse(res, {
     statusCode: 200,
