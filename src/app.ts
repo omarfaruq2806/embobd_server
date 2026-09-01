@@ -8,6 +8,8 @@ import { notFoundHandler } from "./middlewares/notFoundHandler";
 
 const app: Application = express();
 
+app.set("trust proxy", 1);
+
 const allowedOrigins = [
   "http://localhost:3000",
   "https://embobd.vercel.app",
