@@ -2,6 +2,8 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import prisma from "./prisma";
 
+const isDevelopment = process.env.NODE_ENV !== "production";
+
 export const auth = betterAuth({
   database: prismaAdapter(prisma, {
     provider: "postgresql",
@@ -19,8 +21,13 @@ export const auth = betterAuth({
       },
     },
   },
-  trustedOrigins: ["http://localhost:3000", "http://localhost:5000"],
+  trustedOrigins: [
+    "http://localhost:3000",
+    "http://localhost:5000",
+    process.env.CLIENT_URL || "http://localhost:3000",
+  ],
   advanced: {
-    disableCSRFCheck: true, // Postman এবং ব্রাউজার ক্লায়েন্ট উভয়েই সহজে টেস্ট করার জন্য
+    // ডেভেলপমেন্টে Postman টেস্টিং সহজ করবে, প্রোডাকশনে ফুল সিকিউরিটি দেবে
+    disableCSRFCheck: isDevelopment,
   },
 });
