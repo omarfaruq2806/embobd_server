@@ -3,6 +3,7 @@ import { CategoryRoutes } from "../modules/category/category.routes";
 import { CompanyRoutes } from "../modules/company/company.routes";
 import { JobRoutes } from "../modules/job/job.routes";
 import { UserRoutes } from "../modules/user/user.routes";
+import { BusinessRoutes } from "../modules/business/business.routes";
 
 const router = Router();
 
@@ -22,6 +23,10 @@ const moduleRoutes = [
   {
     path: "/users",
     route: UserRoutes,
+  },
+  {
+    path: "/businesses",
+    route: BusinessRoutes,
   },
 ];
 

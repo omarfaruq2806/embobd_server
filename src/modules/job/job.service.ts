@@ -4,7 +4,15 @@ interface GetAllJobsFilters {
   status?: string;
   ownerUserId?: string;
   categoryId?: string;
+  category?: string;
+  jobType?: string;
+  workplaceType?: string;
+  location?: string;
   search?: string;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+  page?: number | string;
+  limit?: number | string;
 }
 
 const createJob = async (data: any) => {
@@ -63,16 +71,37 @@ const createJob = async (data: any) => {
 const getAllJobs = async (filters: GetAllJobsFilters = {}) => {
   const where: any = {};
 
-  if (filters.status) {
+  if (filters.status && filters.status !== "ALL") {
     where.status = filters.status;
+  }
+
+  if (filters.jobType && filters.jobType !== "ALL") {
+    where.jobType = filters.jobType;
+  }
+
+  if (filters.workplaceType && filters.workplaceType !== "ALL") {
+    where.workplaceType = filters.workplaceType;
   }
 
   if (filters.ownerUserId) {
     where.ownerUserId = filters.ownerUserId;
   }
 
-  if (filters.categoryId) {
+  if (filters.categoryId && filters.categoryId !== "ALL") {
     where.categoryId = filters.categoryId;
+  }
+
+  if (filters.category && filters.category !== "ALL") {
+    where.category = {
+      name: { equals: filters.category, mode: "insensitive" },
+    };
+  }
+
+  if (filters.location && filters.location !== "ALL") {
+    where.location = {
+      contains: filters.location,
+      mode: "insensitive",
+    };
   }
 
   if (filters.search) {
@@ -80,14 +109,26 @@ const getAllJobs = async (filters: GetAllJobsFilters = {}) => {
       { title: { contains: filters.search, mode: "insensitive" } },
       { description: { contains: filters.search, mode: "insensitive" } },
       { location: { contains: filters.search, mode: "insensitive" } },
+      { company: { name: { contains: filters.search, mode: "insensitive" } } },
+      { category: { name: { contains: filters.search, mode: "insensitive" } } },
     ];
   }
 
+  // Sorting
+  const sortField = filters.sortBy || "createdAt";
+  const sortOrder = filters.sortOrder === "asc" ? "asc" : "desc";
+  const orderBy = { [sortField]: sortOrder };
+
+  // Pagination (Optional limit/page)
+  const page = Number(filters.page) || 1;
+  const limit = Number(filters.limit) || 50;
+  const skip = (page - 1) * limit;
+
   const result = await prisma.job.findMany({
     where,
-    orderBy: {
-      createdAt: "desc",
-    },
+    orderBy,
+    skip: filters.page ? skip : undefined,
+    take: filters.limit ? limit : undefined,
     include: {
       company: {
         select: {
@@ -113,6 +154,7 @@ const getAllJobs = async (filters: GetAllJobsFilters = {}) => {
       },
     },
   });
+
   return result;
 };
 

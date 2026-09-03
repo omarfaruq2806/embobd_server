@@ -46,22 +46,25 @@ enum WorkplaceType {
 //=======================================
 
 model User {
-  id            String    @id
+  id            String  @id
   name          String
-  email         String    @unique
-  emailVerified Boolean   @default(false)
+  email         String  @unique
+  emailVerified Boolean @default(false)
   image         String?
-  role          Role      @default(CANDIDATE)
+  role          Role    @default(CANDIDATE)
 
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  sessions      Session[]
-  accounts      Account[]
+  sessions Session[]
+  accounts Account[]
 
-  profile       Profile?
-  companies     Company[]
-  jobs          Job[]
+  profile   Profile?
+  companies Company[]
+  jobs      Job[]
+
+  submittedBusinesses Business[] @relation("BusinessSubmittedBy")
+  approvedBusinesses  Business[] @relation("BusinessApprovedBy")
 
   @@index([role])
 }
@@ -116,21 +119,21 @@ model Verification {
 //=======================================
 
 model Profile {
-  id           String    @id @default(cuid())
-  userId       String    @unique
-  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   avatar       String?
   bio          String?
   phone        String?
   location     String?
   title        String?
-  skills       String[]  @default([])
+  skills       String[] @default([])
   resumeUrl    String?
   portfolioUrl String?
 
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([userId])
 }
@@ -215,4 +218,78 @@ model Job {
   @@index([status])
   @@index([jobType])
   @@index([workplaceType])
+}
+
+//=======================================
+enum BusinessType {
+  SHOP
+  FACTORY
+  COMPANY
+  DEALER
+  DISTRIBUTOR
+  SUPPLIER
+}
+
+//=======================================
+enum BusinessStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+//=======================================
+enum BusinessSource {
+  MODERATOR
+  BUSINESS_REQUEST
+  IMPORT
+}
+
+//=======================================
+// Business Model
+//=======================================
+
+model Business {
+  id String @id @default(cuid())
+
+  name String
+  slug String       @unique
+  type BusinessType
+
+  logo        String?
+  description String?
+
+  brands String[]
+
+  phone   String
+  email   String?
+  website String?
+
+  address  String
+  area     String?
+  district String
+  country  String? @default("Bangladesh")
+
+  status     BusinessStatus @default(PENDING)
+  isVerified Boolean        @default(false)
+  source     BusinessSource @default(MODERATOR)
+
+  submittedBy   String?
+  submittedUser User?   @relation("BusinessSubmittedBy", fields: [submittedBy], references: [id])
+
+  approvedBy   String?
+  approvedUser User?   @relation("BusinessApprovedBy", fields: [approvedBy], references: [id])
+
+  approvedAt      DateTime?
+  rejectionReason String?
+  lastVerifiedAt  DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([type])
+  @@index([district])
+  @@index([isVerified])
+  @@index([submittedBy])
+  @@index([approvedBy])
 }

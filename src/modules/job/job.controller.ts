@@ -14,8 +14,35 @@ const createJob = catchAsync(async (req: any, res: any) => {
 });
 
 const getAllJobs = catchAsync(async (req: any, res: any) => {
-  const { status, ownerUserId, categoryId, search } = req.query;
-  const result = await JobService.getAllJobs({ status, ownerUserId, categoryId, search });
+  const {
+    status,
+    ownerUserId,
+    categoryId,
+    category,
+    jobType,
+    workplaceType,
+    location,
+    search,
+    sortBy,
+    sortOrder,
+    page,
+    limit,
+  } = req.query;
+
+  const result = await JobService.getAllJobs({
+    status,
+    ownerUserId,
+    categoryId,
+    category,
+    jobType,
+    workplaceType,
+    location,
+    search,
+    sortBy,
+    sortOrder,
+    page,
+    limit,
+  });
 
   sendResponse(res, {
     statusCode: 200,

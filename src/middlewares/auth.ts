@@ -22,3 +22,20 @@ export const requireAuth = catchAsync(async (req: any, res: any, next: any) => {
 
   next();
 });
+
+// অপশনাল সেশন চেক করার মিডলওয়্যার (যদি লগইন করা থাকে তবে ইউজার অবজেক্ট যুক্ত করবে, না থাকলেও রিকোয়েস্ট ব্লক করবে না)
+export const optionalAuth = catchAsync(async (req: any, res: any, next: any) => {
+  try {
+    const session = await auth.api.getSession({
+      headers: fromNodeHeaders(req.headers),
+    });
+    if (session) {
+      req.user = session.user;
+      req.session = session.session;
+    }
+  } catch (err) {
+    // Ignore error for optional auth
+  }
+  next();
+});
+
