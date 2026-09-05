@@ -101,29 +101,29 @@ const createBusiness = async (data: any, user: any) => {
 const getAllBusinesses = async (filters: GetAllBusinessesFilters = {}) => {
   const where: any = {};
 
-  if (filters.status) {
+  if (filters.status && filters.status !== "ALL") {
     where.status = filters.status;
   }
 
-  if (filters.type) {
+  if (filters.type && filters.type !== "ALL") {
     where.type = filters.type;
   }
 
-  if (filters.district) {
+  if (filters.district && filters.district !== "All Locations" && filters.district !== "ALL") {
     where.district = {
       contains: filters.district,
       mode: "insensitive",
     };
   }
 
-  if (filters.area) {
+  if (filters.area && filters.area !== "ALL") {
     where.area = {
       contains: filters.area,
       mode: "insensitive",
     };
   }
 
-  if (filters.source) {
+  if (filters.source && filters.source !== "ALL") {
     where.source = filters.source;
   }
 
@@ -131,12 +131,12 @@ const getAllBusinesses = async (filters: GetAllBusinessesFilters = {}) => {
     where.submittedBy = filters.submittedBy;
   }
 
-  if (filters.isVerified !== undefined) {
+  if (filters.isVerified !== undefined && filters.isVerified !== "ALL") {
     where.isVerified =
       filters.isVerified === true || filters.isVerified === "true";
   }
 
-  if (filters.brand) {
+  if (filters.brand && filters.brand !== "ALL") {
     where.brands = {
       has: filters.brand,
     };
