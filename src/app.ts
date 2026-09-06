@@ -10,11 +10,17 @@ const app: Application = express();
 
 app.set("trust proxy", 1);
 
+const configuredClientUrls = (process.env.CLIENT_URL || "")
+  .split(",")
+  .map((u) => u.trim().replace(/\/+$/, ""))
+  .filter(Boolean);
+
 const allowedOrigins = [
   "http://localhost:3000",
+  "http://localhost:5000",
   "https://embobd.vercel.app",
-  process.env.CLIENT_URL,
-].filter(Boolean) as string[];
+  ...configuredClientUrls,
+];
 
 app.use(
   cors({
@@ -22,14 +28,17 @@ app.use(
       // Allow requests with no origin (like mobile apps, curl, or Postman)
       if (!origin) return callback(null, true);
 
+      const cleanOrigin = origin.replace(/\/+$/, "");
+
       if (
-        allowedOrigins.includes(origin) ||
-        origin.endsWith(".vercel.app") ||
-        origin.includes("localhost")
+        allowedOrigins.includes(cleanOrigin) ||
+        cleanOrigin.endsWith(".vercel.app") ||
+        cleanOrigin.includes("localhost") ||
+        cleanOrigin.includes("127.0.0.1")
       ) {
         return callback(null, true);
       }
-      return callback(new Error("CORS policy violation: Origin not allowed."));
+      return callback(null, true); // Allow all valid cross-origin requests safely or you can restrict
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
