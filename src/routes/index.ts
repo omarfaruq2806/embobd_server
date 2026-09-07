@@ -4,6 +4,7 @@ import { CompanyRoutes } from "../modules/company/company.routes";
 import { JobRoutes } from "../modules/job/job.routes";
 import { UserRoutes } from "../modules/user/user.routes";
 import { BusinessRoutes } from "../modules/business/business.routes";
+import { CommunityRoutes } from "../modules/community/community.routes";
 
 const router = Router();
 
@@ -27,6 +28,10 @@ const moduleRoutes = [
   {
     path: "/businesses",
     route: BusinessRoutes,
+  },
+  {
+    path: "/community",
+    route: CommunityRoutes,
   },
 ];
 
