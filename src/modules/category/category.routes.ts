@@ -1,12 +1,38 @@
 import { Router } from "express";
 import { CategoryController } from "./category.controller";
+import { requireAuth, requireRole } from "../../middlewares/auth";
+import { validateRequest } from "../../middlewares/validateRequest";
+import { CategoryValidation } from "./category.validation";
 
 const router = Router();
 
-router.post("/", CategoryController.createCategory);
+// Public routes
 router.get("/", CategoryController.getAllCategories);
 router.get("/:id", CategoryController.getCategoryById);
-router.patch("/:id", CategoryController.updateCategory);
-router.delete("/:id", CategoryController.deleteCategory);
+
+// Admin-only protected routes
+router.post(
+  "/",
+  requireAuth,
+  requireRole("ADMIN"),
+  validateRequest(CategoryValidation.createCategorySchema),
+  CategoryController.createCategory
+);
+
+router.patch(
+  "/:id",
+  requireAuth,
+  requireRole("ADMIN"),
+  validateRequest(CategoryValidation.updateCategorySchema),
+  CategoryController.updateCategory
+);
+
+router.delete(
+  "/:id",
+  requireAuth,
+  requireRole("ADMIN"),
+  CategoryController.deleteCategory
+);
 
 export const CategoryRoutes = router;
+

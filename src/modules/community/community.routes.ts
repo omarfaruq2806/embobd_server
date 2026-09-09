@@ -1,6 +1,9 @@
 import { Router } from "express";
 import { CommunityController } from "./community.controller";
-import { requireAuth, optionalAuth } from "../../middlewares/auth";
+import { requireAuth, optionalAuth, requireRole } from "../../middlewares/auth";
+import { validateRequest } from "../../middlewares/validateRequest";
+import { CommunityValidation } from "./community.validation";
+import { createResourceLimiter } from "../../middlewares/rateLimiter";
 
 const router = Router();
 
@@ -20,19 +23,67 @@ router.get("/posts/:idOrSlug", CommunityController.getPostByIdOrSlug);
 router.get("/:idOrSlug", CommunityController.getPostByIdOrSlug);
 
 // Post creation & management (Authentication required)
-router.post("/", requireAuth, CommunityController.createPost);
-router.post("/posts", requireAuth, CommunityController.createPost);
+router.post(
+  "/",
+  createResourceLimiter,
+  requireAuth,
+  validateRequest(CommunityValidation.createPostSchema),
+  CommunityController.createPost
+);
+router.post(
+  "/posts",
+  createResourceLimiter,
+  requireAuth,
+  validateRequest(CommunityValidation.createPostSchema),
+  CommunityController.createPost
+);
 
-router.patch("/posts/:id", requireAuth, CommunityController.updatePost);
-router.patch("/:id", requireAuth, CommunityController.updatePost);
 
-router.patch("/posts/:id/approve", requireAuth, CommunityController.approvePost);
-router.patch("/:id/approve", requireAuth, CommunityController.approvePost);
+router.patch(
+  "/posts/:id",
+  requireAuth,
+  validateRequest(CommunityValidation.updatePostSchema),
+  CommunityController.updatePost
+);
+router.patch(
+  "/:id",
+  requireAuth,
+  validateRequest(CommunityValidation.updatePostSchema),
+  CommunityController.updatePost
+);
 
-router.patch("/posts/:id/reject", requireAuth, CommunityController.rejectPost);
-router.patch("/:id/reject", requireAuth, CommunityController.rejectPost);
+// Admin & Moderator approval/rejection
+router.patch(
+  "/posts/:id/approve",
+  requireAuth,
+  requireRole("ADMIN", "MODERATOR"),
+  CommunityController.approvePost
+);
+router.patch(
+  "/:id/approve",
+  requireAuth,
+  requireRole("ADMIN", "MODERATOR"),
+  CommunityController.approvePost
+);
 
+router.patch(
+  "/posts/:id/reject",
+  requireAuth,
+  requireRole("ADMIN", "MODERATOR"),
+  validateRequest(CommunityValidation.rejectPostSchema),
+  CommunityController.rejectPost
+);
+router.patch(
+  "/:id/reject",
+  requireAuth,
+  requireRole("ADMIN", "MODERATOR"),
+  validateRequest(CommunityValidation.rejectPostSchema),
+  CommunityController.rejectPost
+);
+
+// Deletion (Author or Admin/Moderator)
 router.delete("/posts/:id", requireAuth, CommunityController.deletePost);
 router.delete("/:id", requireAuth, CommunityController.deletePost);
 
 export const CommunityRoutes = router;
+

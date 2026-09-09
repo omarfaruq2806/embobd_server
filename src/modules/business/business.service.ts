@@ -228,7 +228,27 @@ const getBusinessBySlug = async (slug: string) => {
   return result;
 };
 
-const updateBusiness = async (id: string, data: any) => {
+const updateBusiness = async (id: string, data: any, user?: any) => {
+  const existing = await prisma.business.findUnique({ where: { id } });
+  if (!existing) {
+    throw new Error("Business not found.");
+  }
+
+  if (user) {
+    const isOwner = existing.submittedBy === user.id;
+    const isAdminOrMod = user.role === "ADMIN" || user.role === "MODERATOR";
+
+    if (!isOwner && !isAdminOrMod) {
+      throw new Error("Forbidden! You are not authorized to update this business.");
+    }
+
+    // Only Admin/Moderator can alter isVerified or status directly
+    if (!isAdminOrMod) {
+      delete data.isVerified;
+      delete data.status;
+    }
+  }
+
   // Ensure brands format if provided
   if (data.brands && typeof data.brands === "string") {
     data.brands = data.brands
@@ -303,13 +323,28 @@ const rejectBusiness = async (
   return result;
 };
 
-const deleteBusiness = async (id: string) => {
+const deleteBusiness = async (id: string, user?: any) => {
+  const existing = await prisma.business.findUnique({ where: { id } });
+  if (!existing) {
+    throw new Error("Business not found.");
+  }
+
+  if (user) {
+    const isOwner = existing.submittedBy === user.id && existing.status === "PENDING";
+    const isAdmin = user.role === "ADMIN";
+
+    if (!isOwner && !isAdmin) {
+      throw new Error("Forbidden! Only administrators can delete businesses.");
+    }
+  }
+
   const result = await prisma.business.delete({
     where: { id },
   });
 
   return result;
 };
+
 
 export const BusinessService = {
   createBusiness,

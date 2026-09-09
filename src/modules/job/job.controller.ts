@@ -3,12 +3,15 @@ import { sendResponse } from "../../utils/sendResponse";
 import { JobService } from "./job.service";
 
 const createJob = catchAsync(async (req: any, res: any) => {
-  const result = await JobService.createJob(req.body);
+  const result = await JobService.createJob(req.body, req.user);
 
   sendResponse(res, {
     statusCode: 201,
     success: true,
-    message: "Job submitted successfully and is pending admin approval",
+    message:
+      result.status === "PUBLISHED"
+        ? "Job published successfully!"
+        : "Job submitted successfully and is pending review.",
     data: result,
   });
 });
@@ -75,7 +78,7 @@ const getJobById = catchAsync(async (req: any, res: any) => {
 
 const updateJob = catchAsync(async (req: any, res: any) => {
   const { id } = req.params;
-  const result = await JobService.updateJob(id, req.body);
+  const result = await JobService.updateJob(id, req.body, req.user);
 
   sendResponse(res, {
     statusCode: 200,
@@ -87,7 +90,7 @@ const updateJob = catchAsync(async (req: any, res: any) => {
 
 const deleteJob = catchAsync(async (req: any, res: any) => {
   const { id } = req.params;
-  const result = await JobService.deleteJob(id);
+  const result = await JobService.deleteJob(id, req.user);
 
   sendResponse(res, {
     statusCode: 200,
@@ -104,3 +107,4 @@ export const JobController = {
   updateJob,
   deleteJob,
 };
+

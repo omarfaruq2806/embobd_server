@@ -15,9 +15,18 @@ interface GetAllJobsFilters {
   limit?: number | string;
 }
 
-const createJob = async (data: any) => {
-  // If no status is explicitly set, set to DRAFT (Pending Review)
-  if (!data.status) {
+const createJob = async (data: any, user: any) => {
+  if (!user || !user.id) {
+    throw new Error("Authentication required to post a job.");
+  }
+
+  // Associate ownerUserId with authenticated user
+  data.ownerUserId = user.id;
+
+  // Determine status: ADMIN and MODERATOR can directly publish, EMPLOYER defaults to DRAFT
+  if (user.role === "ADMIN" || user.role === "MODERATOR") {
+    data.status = data.status || "PUBLISHED";
+  } else {
     data.status = "DRAFT";
   }
 
@@ -67,6 +76,7 @@ const createJob = async (data: any) => {
   });
   return result;
 };
+
 
 const getAllJobs = async (filters: GetAllJobsFilters = {}) => {
   const where: any = {};
@@ -177,8 +187,25 @@ const getJobById = async (id: string) => {
   return result;
 };
 
-const updateJob = async (id: string, data: any) => {
-  if (data.status === "PUBLISHED" && !data.publishedAt) {
+const updateJob = async (id: string, data: any, user: any) => {
+  const existing = await prisma.job.findUnique({ where: { id } });
+  if (!existing) {
+    throw new Error("Job not found.");
+  }
+
+  const isOwner = existing.ownerUserId === user.id;
+  const isAdminOrMod = user.role === "ADMIN" || user.role === "MODERATOR";
+
+  if (!isOwner && !isAdminOrMod) {
+    throw new Error("Forbidden! You are not authorized to update this job.");
+  }
+
+  // Only Admin/Moderator can publish a job (Employers can only submit as DRAFT or set CLOSED)
+  if (!isAdminOrMod && data.status === "PUBLISHED" && existing.status !== "PUBLISHED") {
+    delete data.status;
+  }
+
+  if (data.status === "PUBLISHED" && !existing.publishedAt) {
     data.publishedAt = new Date();
   }
 
@@ -188,17 +215,38 @@ const updateJob = async (id: string, data: any) => {
     include: {
       company: true,
       category: true,
+      owner: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+        },
+      },
     },
   });
   return result;
 };
 
-const deleteJob = async (id: string) => {
+const deleteJob = async (id: string, user: any) => {
+  const existing = await prisma.job.findUnique({ where: { id } });
+  if (!existing) {
+    throw new Error("Job not found.");
+  }
+
+  const isOwner = existing.ownerUserId === user.id;
+  const isAdmin = user.role === "ADMIN";
+
+  if (!isOwner && !isAdmin) {
+    throw new Error("Forbidden! You are not authorized to delete this job.");
+  }
+
   const result = await prisma.job.delete({
     where: { id },
   });
   return result;
 };
+
 
 export const JobService = {
   createJob,

@@ -23,6 +23,31 @@ export const requireAuth = catchAsync(async (req: any, res: any, next: any) => {
   next();
 });
 
+// নির্দিষ্ট রোল বা রোলসমূহের অনুমতি চেক করার মিডলওয়্যার
+export const requireRole = (...allowedRoles: string[]) => {
+  return catchAsync(async (req: any, res: any, next: any) => {
+    if (!req.user) {
+      return res.status(401).json({
+        success: false,
+        statusCode: 401,
+        message: "You are not authenticated! Please sign in first.",
+      });
+    }
+
+    const userRole = req.user.role;
+
+    if (!allowedRoles.includes(userRole)) {
+      return res.status(403).json({
+        success: false,
+        statusCode: 403,
+        message: `Forbidden! Access denied for role: ${userRole}. Required role: ${allowedRoles.join(" or ")}.`,
+      });
+    }
+
+    next();
+  });
+};
+
 // অপশনাল সেশন চেক করার মিডলওয়্যার (যদি লগইন করা থাকে তবে ইউজার অবজেক্ট যুক্ত করবে, না থাকলেও রিকোয়েস্ট ব্লক করবে না)
 export const optionalAuth = catchAsync(async (req: any, res: any, next: any) => {
   try {
@@ -38,4 +63,5 @@ export const optionalAuth = catchAsync(async (req: any, res: any, next: any) => 
   }
   next();
 });
+
 

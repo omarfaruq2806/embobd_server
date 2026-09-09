@@ -68,7 +68,21 @@ const getUserById = async (id: string) => {
   return result;
 };
 
-const updateUser = async (id: string, data: any) => {
+const updateUser = async (id: string, data: any, currentUser?: any) => {
+  if (currentUser) {
+    const isSelf = currentUser.id === id;
+    const isAdmin = currentUser.role === "ADMIN";
+
+    if (!isSelf && !isAdmin) {
+      throw new Error("Forbidden! You are not authorized to update this user.");
+    }
+
+    // Only Admin can change user roles
+    if (data.role && !isAdmin) {
+      delete data.role;
+    }
+  }
+
   const { profile, ...userData } = data;
 
   const result = await prisma.user.update({
@@ -91,7 +105,16 @@ const updateUser = async (id: string, data: any) => {
   return result;
 };
 
-const updateProfile = async (userId: string, data: any) => {
+const updateProfile = async (userId: string, data: any, currentUser?: any) => {
+  if (currentUser) {
+    const isSelf = currentUser.id === userId;
+    const isAdmin = currentUser.role === "ADMIN";
+
+    if (!isSelf && !isAdmin) {
+      throw new Error("Forbidden! You are not authorized to update this profile.");
+    }
+  }
+
   const result = await prisma.profile.upsert({
     where: { userId },
     create: {
@@ -103,12 +126,22 @@ const updateProfile = async (userId: string, data: any) => {
   return result;
 };
 
-const deleteUser = async (id: string) => {
+const deleteUser = async (id: string, currentUser?: any) => {
+  if (currentUser) {
+    if (currentUser.role !== "ADMIN") {
+      throw new Error("Forbidden! Only administrators can delete users.");
+    }
+    if (currentUser.id === id) {
+      throw new Error("Cannot delete your own admin account.");
+    }
+  }
+
   const result = await prisma.user.delete({
     where: { id },
   });
   return result;
 };
+
 
 export const UserService = {
   createUser,

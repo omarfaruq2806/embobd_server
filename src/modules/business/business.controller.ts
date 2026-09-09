@@ -93,7 +93,7 @@ const getBusinessBySlug = catchAsync(async (req: any, res: any) => {
 
 const updateBusiness = catchAsync(async (req: any, res: any) => {
   const { id } = req.params;
-  const result = await BusinessService.updateBusiness(id, req.body);
+  const result = await BusinessService.updateBusiness(id, req.body, req.user);
 
   sendResponse(res, {
     statusCode: 200,
@@ -136,7 +136,7 @@ const rejectBusiness = catchAsync(async (req: any, res: any) => {
 
 const deleteBusiness = catchAsync(async (req: any, res: any) => {
   const { id } = req.params;
-  const result = await BusinessService.deleteBusiness(id);
+  const result = await BusinessService.deleteBusiness(id, req.user);
 
   sendResponse(res, {
     statusCode: 200,
@@ -145,6 +145,7 @@ const deleteBusiness = catchAsync(async (req: any, res: any) => {
     data: result,
   });
 });
+
 
 export const BusinessController = {
   createBusiness,

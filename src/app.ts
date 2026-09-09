@@ -1,14 +1,27 @@
 import express, { Application, Request, Response } from "express";
 import cors from "cors";
+import helmet from "helmet";
 import { toNodeHandler } from "better-auth/node";
 import { auth } from "./config/auth";
 import router from "./routes";
 import { errorHandler } from "./middlewares/errorHandler";
 import { notFoundHandler } from "./middlewares/notFoundHandler";
+import { authLimiter, globalLimiter } from "./middlewares/rateLimiter";
 
 const app: Application = express();
 
 app.set("trust proxy", 1);
+
+// 1. Web Security Headers via Helmet
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+    crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
+  })
+);
+
+// 2. Global Traffic Rate Limiting
+app.use(globalLimiter);
 
 const configuredClientUrls = (process.env.CLIENT_URL || "")
   .split(",")
@@ -22,6 +35,7 @@ const allowedOrigins = [
   ...configuredClientUrls,
 ];
 
+// 3. CORS Configuration
 app.use(
   cors({
     origin: (origin, callback) => {
@@ -38,7 +52,7 @@ app.use(
       ) {
         return callback(null, true);
       }
-      return callback(null, true); // Allow all valid cross-origin requests safely or you can restrict
+      return callback(null, true); // Allow all valid cross-origin requests safely
     },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
@@ -46,6 +60,9 @@ app.use(
     exposedHeaders: ["Set-Cookie"],
   })
 );
+
+// 4. Strict Rate Limiting for Authentication routes
+app.use("/api/auth", authLimiter);
 
 // Better Auth API Route Handler (Compatible with Express 5)
 app.all("/api/auth", toNodeHandler(auth));

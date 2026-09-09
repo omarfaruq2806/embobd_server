@@ -3,7 +3,7 @@ import { sendResponse } from "../../utils/sendResponse";
 import { CompanyService } from "./company.service";
 
 const createCompany = catchAsync(async (req: any, res: any) => {
-  const result = await CompanyService.createCompany(req.body);
+  const result = await CompanyService.createCompany(req.body, req.user);
 
   sendResponse(res, {
     statusCode: 201,
@@ -47,7 +47,7 @@ const getCompanyById = catchAsync(async (req: any, res: any) => {
 
 const updateCompany = catchAsync(async (req: any, res: any) => {
   const { id } = req.params;
-  const result = await CompanyService.updateCompany(id, req.body);
+  const result = await CompanyService.updateCompany(id, req.body, req.user);
 
   sendResponse(res, {
     statusCode: 200,
@@ -59,7 +59,7 @@ const updateCompany = catchAsync(async (req: any, res: any) => {
 
 const deleteCompany = catchAsync(async (req: any, res: any) => {
   const { id } = req.params;
-  const result = await CompanyService.deleteCompany(id);
+  const result = await CompanyService.deleteCompany(id, req.user);
 
   sendResponse(res, {
     statusCode: 200,
@@ -76,3 +76,4 @@ export const CompanyController = {
   updateCompany,
   deleteCompany,
 };
+
